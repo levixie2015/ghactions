@@ -34,7 +34,7 @@ jobs:
         New-Item -ItemType Directory -Force -Path dist
         Copy-Item "target\cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" -Destination "dist\"
         Set-Content -Path "dist\run.bat" -Value "@echo off`njava -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar"
-        Compress-Archive -Path "dist\*" -DestinationPath "cross-platform-demo-windows.zip" -Force
+        Compress-Archive -Path "dist\*" -DestinationPath "release-windows.zip" -Force
 
     - name: Create Platform Specific Package (Unix)
       if: matrix.os != 'windows-latest'
@@ -45,18 +45,19 @@ jobs:
         echo "#!/bin/bash" > dist/run.sh
         echo "java -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" >> dist/run.sh
         chmod +x dist/run.sh
-        cd dist
         if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-          tar -czf ../cross-platform-demo-linux.tar.gz *
+          tar -czf release-linux.tar.gz -C dist .
         else
-          tar -czf ../cross-platform-demo-mac.tar.gz *
+          tar -czf release-mac.tar.gz -C dist .
         fi
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: cross-platform-demo-${{ matrix.os }}
-        path: cross-platform-demo-*.{zip,tar.gz}
+        name: release-${{ matrix.os }}
+        path: |
+          release-*.zip
+          release-*.tar.gz
         retention-days: 90
 
     - name: Upload Release Assets
@@ -64,7 +65,8 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: |
-          cross-platform-demo-*.zip
-          cross-platform-demo-*.tar.gz
+          release-*.zip
+          release-*.tar.gz
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        permissions: write-all 
