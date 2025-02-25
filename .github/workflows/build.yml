@@ -4,7 +4,7 @@ name: Cross Platform Build
 permissions:
   contents: write
   packages: write
-  releases: write
+  actions: write
 
 on:
   push:
@@ -20,58 +20,58 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up JDK 8
-      uses: actions/setup-java@v4
-      with:
-        java-version: '8'
-        distribution: 'zulu'
-        
-    - name: Build with Maven
-      run: mvn clean package
-        
-    - name: Create Platform Specific Package (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: pwsh
-      run: |
-        New-Item -ItemType Directory -Force -Path dist
-        Copy-Item "target\cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" -Destination "dist\"
-        Set-Content -Path "dist\run.bat" -Value "@echo off`njava -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar"
-        Compress-Archive -Path "dist\*" -DestinationPath "release-windows.zip" -Force
+      - uses: actions/checkout@v4
 
-    - name: Create Platform Specific Package (Unix)
-      if: matrix.os != 'windows-latest'
-      shell: bash
-      run: |
-        mkdir -p dist
-        cp target/cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar dist/
-        echo "#!/bin/bash" > dist/run.sh
-        echo "java -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" >> dist/run.sh
-        chmod +x dist/run.sh
-        if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-          tar -czf release-linux.tar.gz -C dist .
-        else
-          tar -czf release-mac.tar.gz -C dist .
-        fi
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'zulu'
 
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-${{ matrix.os }}
-        path: |
-          release-*.zip
-          release-*.tar.gz
-        retention-days: 90
+      - name: Build with Maven
+        run: mvn clean package
 
-    - name: Upload Release Assets
-      if: github.event_name == 'release'
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          release-*.zip
-          release-*.tar.gz
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+      - name: Create Platform Specific Package (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item "target\cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" -Destination "dist\"
+          Set-Content -Path "dist\run.bat" -Value "@echo off`njava -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar"
+          Compress-Archive -Path "dist\*" -DestinationPath "release-windows.zip" -Force
+
+      - name: Create Platform Specific Package (Unix)
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp target/cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar dist/
+          echo "#!/bin/bash" > dist/run.sh
+          echo "java -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" >> dist/run.sh
+          chmod +x dist/run.sh
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            tar -czf release-linux.tar.gz -C dist .
+          else
+            tar -czf release-mac.tar.gz -C dist .
+          fi
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            release-*.zip
+            release-*.tar.gz
+          retention-days: 90
+
+      - name: Upload Release Assets
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-*.zip
+            release-*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
