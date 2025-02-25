@@ -16,13 +16,13 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 8
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           java-version: '8'
-          distribution: 'adopt'
+          distribution: 'temurin'
 
       - name: Build with Maven
         run: mvn clean package
@@ -51,14 +51,15 @@ jobs:
         shell: bash
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cross-platform-demo-${{ matrix.os }}
           path: cross-platform-demo-*.{zip,tar.gz}
+          retention-days: 90
 
       - name: Upload Release Assets
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             cross-platform-demo-*.zip
