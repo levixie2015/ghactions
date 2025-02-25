@@ -1,0 +1,67 @@
+name: Cross Platform Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up JDK 8
+      uses: actions/setup-java@v2
+      with:
+        java-version: '8'
+        distribution: 'adopt'
+        
+    - name: Build with Maven
+      run: mvn clean package
+        
+    - name: Create Platform Specific Package
+      run: |
+        mkdir -p dist
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          echo "@echo off" > dist/run.bat
+          echo "java -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" >> dist/run.bat
+          cp target/cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar dist/
+          cd dist && zip -r ../cross-platform-demo-windows.zip *
+        elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+          echo "#!/bin/bash" > dist/run.sh
+          echo "java -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" >> dist/run.sh
+          chmod +x dist/run.sh
+          cp target/cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar dist/
+          cd dist && tar -czf ../cross-platform-demo-linux.tar.gz *
+        else
+          echo "#!/bin/bash" > dist/run.sh
+          echo "java -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" >> dist/run.sh
+          chmod +x dist/run.sh
+          cp target/cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar dist/
+          cd dist && tar -czf ../cross-platform-demo-mac.tar.gz *
+        fi
+      shell: bash
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: cross-platform-demo-${{ matrix.os }}
+        path: cross-platform-demo-*.{zip,tar.gz}
+
+    - name: Upload Release Assets
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          cross-platform-demo-*.zip
+          cross-platform-demo-*.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
