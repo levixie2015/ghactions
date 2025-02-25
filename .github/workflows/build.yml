@@ -1,5 +1,11 @@
 name: Cross Platform Build
 
+# 添加权限配置
+permissions:
+  contents: write
+  packages: write
+  releases: write
+
 on:
   push:
     branches: [ main ]
@@ -68,5 +74,4 @@ jobs:
           release-*.zip
           release-*.tar.gz
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        permissions: write-all 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
