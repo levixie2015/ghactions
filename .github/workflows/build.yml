@@ -36,6 +36,7 @@ jobs:
             echo "java -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" >> dist/run.bat
             cp target/cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar dist/
             cd dist && zip -r ../cross-platform-demo-windows.zip *
+            powershell Compress-Archive -Path dist/* -DestinationPath cross-platform-demo-windows.zip
           elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             echo "#!/bin/bash" > dist/run.sh
             echo "java -jar cross-platform-demo-1.0-SNAPSHOT-jar-with-dependencies.jar" >> dist/run.sh
